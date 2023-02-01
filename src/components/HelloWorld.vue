@@ -12,12 +12,21 @@ interface Todos {
 }
 
 const todos = ref<Todos[] | null>(null);
-const shownTodos = computed(() => {
-  if (todos.value) return todos.value?.filter((t) => !t.done);
-  return todos.value;
-});
+const onlyDone = ref(false)
 
-let newTodo = ref('');
+// const shownTodos = computed(() => {
+//   if (todos.value) {
+//     if (onlyDone) {
+//       return todos.value?.filter((t) => t.done);
+//     }
+
+//     return todos.value?.filter((t) => !t.done);
+//   }
+
+//   return [];
+// });
+
+const newTodo = ref('');
 const handleAdd = () => {
   if (newTodo.value !== '') {
     todos.value?.push({
@@ -29,6 +38,15 @@ const handleAdd = () => {
     newTodo.value = '';
   }
 }
+
+const handleDelete = (id: string) => {
+ if(todos.value){
+  todos.value = todos.value.filter((item) => {
+    return item.id !== id
+  })
+ }
+}
+
 
 onMounted(async () => {
   try {
@@ -87,15 +105,34 @@ onMounted(async () => {
             <span>
               {{ todo.description }}
             </span>
-            <span>
-              <button @click="todo.done = !todo.done">
-                {{ todo.done ? 'Undone' : 'Done' }}
-              </button>
-            </span>
+            <div class="flex gap-5">
+              <span>
+                <button @click="todo.done = !todo.done">
+                  {{ todo.done ? 'Undone' : 'Done' }}
+                </button>
+              </span>
+              <span>
+                <button @click="() => handleDelete(todo.id)">Remove</button>
+              </span>
+            </div>
           </div>
         </li>
       </ul>
     </div>
+    <span>
+      <Switch
+        v-model="onlyDone"
+        :class="onlyDone ? 'bg-blue-600' : 'bg-gray-400'"
+        class="relative inline-flex h-6 w-11 items-center rounded-full"
+      >
+        <span class="sr-only">Only Done</span>
+        <span
+          :class="onlyDone ? 'translate-x-6' : 'translate-x-1'"
+          class="inline-block h-4 w-4 transform rounded-full bg-white transition"
+        />
+      </Switch>
+      Only Done
+    </span>
   </div>
 </template>
 
