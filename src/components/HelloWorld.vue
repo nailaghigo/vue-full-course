@@ -1,38 +1,105 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { v4 as uuidv4 } from "uuid";
+import { Switch } from "@headlessui/vue";
+import { computed, onMounted, ref, watch, watchEffect } from "vue";
+import axios from "axios";
 
-defineProps<{ msg: string }>()
+interface Todos {
+  id: string;
+  description: string;
+  priority: number;
+  done: boolean;
+}
 
-const count = ref(0)
+const todos = ref<Todos[] | null>(null);
+const shownTodos = computed(() => {
+  if (todos.value) return todos.value?.filter((t) => !t.done);
+  return todos.value;
+});
+
+let newTodo = ref('');
+const handleAdd = () => {
+  if (newTodo.value !== '') {
+    todos.value?.push({
+          id: uuidv4(),
+          description: newTodo.value,
+          priority: 3,
+          done: false,
+    })
+    newTodo.value = '';
+  }
+}
+
+onMounted(async () => {
+  try {
+    const { data, status } = await axios.get("http://localhost:4000/todos");
+    if (status !== 200) throw new Error("Error");
+    todos.value = data;
+  } catch (err) {
+    todos.value = [
+      {
+        id: uuidv4(),
+        description: "Mocked data, request failed",
+        priority: 3,
+        done: false,
+      },
+      {
+        id: uuidv4(),
+        description: "Call mom",
+        priority: 3,
+        done: false,
+      },
+      {
+        id: uuidv4(),
+        description: "Get Haircut",
+        priority: 1,
+        done: true,
+      },
+      {
+        id: uuidv4(),
+        description: "Call mom again",
+        priority: 3,
+        done: false,
+      },
+    ];
+    console.error(err);
+  }
+});
+
+
 </script>
 
 <template>
-  <h1>{{ msg }}</h1>
-
-  <div class="card">
-    <button type="button" @click="count++">count is {{ count }}</button>
-    <p>
-      Edit
-      <code>components/HelloWorld.vue</code> to test HMR
-    </p>
+  <div class="max-w-5xl m-auto mt-4">
+    <div class="flex justify-between">
+      <h1>To Do List With Vue</h1>
+      <div>
+        <input type="text" v-model.trim="newTodo" />
+        <button @click="handleAdd">Add</button>
+      </div>
+    </div>
+    <div>
+      <ul>
+        <li
+          v-for="todo in todos"
+        >
+          <div class="flex justify-between">
+            <span>
+              {{ todo.description }}
+            </span>
+            <span>
+              <button @click="todo.done = !todo.done">
+                {{ todo.done ? 'Undone' : 'Done' }}
+              </button>
+            </span>
+          </div>
+        </li>
+      </ul>
+    </div>
   </div>
-
-  <p>
-    Check out
-    <a href="https://vuejs.org/guide/quick-start.html#local" target="_blank"
-      >create-vue</a
-    >, the official Vue + Vite starter
-  </p>
-  <p>
-    Install
-    <a href="https://github.com/johnsoncodehk/volar" target="_blank">Volar</a>
-    in your IDE for a better DX
-  </p>
-  <p class="read-the-docs">Click on the Vite and Vue logos to learn more</p>
 </template>
 
 <style scoped>
-.read-the-docs {
-  color: #888;
-}
+
 </style>
+
