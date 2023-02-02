@@ -12,30 +12,35 @@ interface Todos {
 }
 
 const todos = ref<Todos[] | null>(null);
-const onlyDone = ref(false)
+const pendingTasks = ref(false)
 
-// const shownTodos = computed(() => {
-//   if (todos.value) {
-//     if (onlyDone) {
-//       return todos.value?.filter((t) => t.done);
-//     }
+const shownTodos = computed(() => {
+  if (todos.value) {
+    if (pendingTasks.value) {
+      return todos.value?.filter((t) => t.done);
+    }
 
-//     return todos.value?.filter((t) => !t.done);
-//   }
+    return todos.value;
+  }
 
-//   return [];
-// });
+  return [];
+});
 
-const newTodo = ref('');
-const handleAdd = () => {
-  if (newTodo.value !== '') {
+const newTodoInput = ref('');
+const numbers = [1, 2, 3];
+const selectedPriority = ref(1);
+
+const handleAdd = (description: string, priority: number) => {
+  if (selectedPriority.value < 1 || selectedPriority.value > 3) return;
+  if (description && newTodoInput.value !== '') {
     todos.value?.push({
-          id: uuidv4(),
-          description: newTodo.value,
-          priority: 3,
-          done: false,
+      id: uuidv4(),
+      description,
+      priority,
+      done: false,
     })
-    newTodo.value = '';
+    newTodoInput.value = '';
+    selectedPriority.value = 1
   }
 }
 
@@ -92,20 +97,35 @@ onMounted(async () => {
     <div class="flex justify-between">
       <h1>To Do List With Vue</h1>
       <div>
-        <input type="text" v-model.trim="newTodo" />
-        <button @click="handleAdd">Add</button>
+        <input
+          type="text"
+          v-model.trim="newTodoInput"
+          class="text-black outline-0 rounded-md pl-2"
+        />
+        <div>
+        <label for="priority-select">Select a priority:</label>
+          <select
+            v-model="selectedPriority"
+            id="number-select"
+            class="text-black outline-0 rounded-md pl-2"
+          >
+            <option v-for="number in numbers" :key="number">{{ number }}</option>
+          </select>
+        </div>
+        <button @click="() => handleAdd(newTodoInput, selectedPriority)">Add</button>
       </div>
     </div>
     <div>
       <ul>
         <li
-          v-for="todo in todos"
+          v-for="todo in shownTodos"
         >
           <div class="flex justify-between">
             <span>
               {{ todo.description }}
             </span>
             <div class="flex gap-5">
+              <span>Priority: {{ todo.priority }}</span>
               <span>
                 <button @click="todo.done = !todo.done">
                   {{ todo.done ? 'Undone' : 'Done' }}
@@ -121,17 +141,17 @@ onMounted(async () => {
     </div>
     <span>
       <Switch
-        v-model="onlyDone"
-        :class="onlyDone ? 'bg-blue-600' : 'bg-gray-400'"
+        v-model="pendingTasks"
+        :class="pendingTasks ? 'bg-blue-600' : 'bg-gray-400'"
         class="relative inline-flex h-6 w-11 items-center rounded-full"
       >
-        <span class="sr-only">Only Done</span>
+        <span class="sr-only">Show Pending Tasks</span>
         <span
-          :class="onlyDone ? 'translate-x-6' : 'translate-x-1'"
+          :class="pendingTasks ? 'translate-x-6' : 'translate-x-1'"
           class="inline-block h-4 w-4 transform rounded-full bg-white transition"
         />
       </Switch>
-      Only Done
+      Show Pending Tasks
     </span>
   </div>
 </template>
