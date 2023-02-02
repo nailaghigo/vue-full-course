@@ -13,11 +13,15 @@ interface Todos {
 
 const todos = ref<Todos[] | null>(null);
 const pendingTasks = ref(false)
+const newTodoInput = ref('');
+const numbers = [1, 2, 3];
+const selectedPriority = ref(1);
+const sortBy = ref(false)
 
 const shownTodos = computed(() => {
   if (todos.value) {
     if (pendingTasks.value) {
-      return todos.value?.filter((t) => t.done);
+      return todos.value?.filter((t) => !t.done);
     }
 
     return todos.value;
@@ -26,9 +30,27 @@ const shownTodos = computed(() => {
   return [];
 });
 
-const newTodoInput = ref('');
-const numbers = [1, 2, 3];
-const selectedPriority = ref(1);
+const sort = () => {
+  if(sortBy.value) {
+    shownTodos.value?.sort((a, b) => a.priority - b.priority)
+  } else {
+    shownTodos.value?.sort((a, b) => {
+      return b.done === a.done
+        ? 0
+        : b.done
+          ? -1
+          : 1
+    })
+  }
+}
+
+watch(sortBy, () => {
+  sort()
+})
+
+const undoneQty = computed(() => {
+  return shownTodos.value?.filter(todo => !todo.done).length || 0
+})
 
 const handleAdd = (description: string, priority: number) => {
   if (selectedPriority.value < 1 || selectedPriority.value > 3) return;
@@ -41,6 +63,8 @@ const handleAdd = (description: string, priority: number) => {
     })
     newTodoInput.value = '';
     selectedPriority.value = 1
+
+    sort()
   }
 }
 
@@ -49,9 +73,10 @@ const handleDelete = (id: string) => {
   todos.value = todos.value.filter((item) => {
     return item.id !== id
   })
+
+  sort()
  }
 }
-
 
 onMounted(async () => {
   try {
@@ -87,6 +112,8 @@ onMounted(async () => {
     ];
     console.error(err);
   }
+
+  sort()
 });
 
 
@@ -96,6 +123,9 @@ onMounted(async () => {
   <div class="max-w-5xl m-auto mt-4">
     <div class="flex justify-between">
       <h1>To Do List With Vue</h1>
+      <div>
+        You have {{ undoneQty }} pending ToDo´s
+      </div>
       <div>
         <input
           type="text"
@@ -115,6 +145,35 @@ onMounted(async () => {
         <button @click="() => handleAdd(newTodoInput, selectedPriority)">Add</button>
       </div>
     </div>
+    <div class="flex justify-between">
+      <div>
+        <Switch
+          v-model="pendingTasks"
+          :class="pendingTasks ? 'bg-blue-600' : 'bg-gray-400'"
+          class="relative inline-flex h-6 w-11 items-center rounded-full"
+        >
+          <span class="sr-only">Show Pending Tasks</span>
+          <span
+            :class="pendingTasks ? 'translate-x-6' : 'translate-x-1'"
+            class="inline-block h-4 w-4 transform rounded-full bg-white transition"
+          />
+        </Switch>
+        Show Only Pending Tasks
+      </div>
+      <div>
+        Status
+        <Switch
+          v-model="sortBy"
+          class="relative inline-flex h-6 w-11 items-center rounded-full bg-blue-600"
+        >
+          <span
+            :class="sortBy ? 'translate-x-6' : 'translate-x-1'"
+            class="inline-block h-4 w-4 transform rounded-full bg-white transition"
+          />
+        </Switch>
+        Priority
+      </div>
+    </div>
     <div>
       <ul>
         <li
@@ -128,7 +187,7 @@ onMounted(async () => {
               <span>Priority: {{ todo.priority }}</span>
               <span>
                 <button @click="todo.done = !todo.done">
-                  {{ todo.done ? 'Undone' : 'Done' }}
+                  {{ todo.done ? 'Done' : 'Undone' }}
                 </button>
               </span>
               <span>
@@ -139,20 +198,9 @@ onMounted(async () => {
         </li>
       </ul>
     </div>
-    <span>
-      <Switch
-        v-model="pendingTasks"
-        :class="pendingTasks ? 'bg-blue-600' : 'bg-gray-400'"
-        class="relative inline-flex h-6 w-11 items-center rounded-full"
-      >
-        <span class="sr-only">Show Pending Tasks</span>
-        <span
-          :class="pendingTasks ? 'translate-x-6' : 'translate-x-1'"
-          class="inline-block h-4 w-4 transform rounded-full bg-white transition"
-        />
-      </Switch>
-      Show Pending Tasks
-    </span>
+    <div>
+      You have {{ undoneQty }} pending ToDo´s
+    </div>
   </div>
 </template>
 
