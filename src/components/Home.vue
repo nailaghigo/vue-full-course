@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { v4 as uuidv4 } from "uuid";
 import { Switch } from "@headlessui/vue";
-import { computed, onMounted, ref, watch, watchEffect } from "vue";
+import { computed, onMounted, ref, watchEffect } from "vue";
 import axios from "axios";
 
 interface Todos {
@@ -12,40 +12,24 @@ interface Todos {
 }
 
 const todos = ref<Todos[] | null>(null);
-const pendingTasks = ref(false)
+const hidePendingTasks = ref(false)
 const newTodoInput = ref('');
 const numbers = [1, 2, 3];
 const selectedPriority = ref(1);
-const sortBy = ref(false)
+const sortByPriority = ref(false)
 
 const shownTodos = computed(() => {
-  if (todos.value) {
-    if (pendingTasks.value) {
-      return todos.value?.filter((t) => !t.done);
-    }
-
-    return todos.value;
+    if (hidePendingTasks.value) return todos.value?.filter((t) => !t.done);
+    return todos.value ?? [];
   }
+);
 
-  return [];
-});
-
-const sort = () => {
-  if(sortBy.value) {
-    shownTodos.value?.sort((a, b) => a.priority - b.priority)
-  } else {
-    shownTodos.value?.sort((a, b) => {
-      return b.done === a.done
-        ? 0
-        : b.done
-          ? -1
-          : 1
-    })
-  }
-}
-
-watch(sortBy, () => {
-  sort()
+watchEffect(() => {
+  shownTodos.value?.sort((a, b) =>
+    sortByPriority.value
+      ? a.priority - b.priority
+      : a.done ? 1 : -1
+  )
 })
 
 const undoneQty = computed(() => {
@@ -53,8 +37,7 @@ const undoneQty = computed(() => {
 })
 
 const handleAdd = (description: string, priority: number) => {
-  if (selectedPriority.value < 1 || selectedPriority.value > 3) return;
-  if (description && newTodoInput.value !== '') {
+  if (newTodoInput.value !== '') {
     todos.value?.push({
       id: uuidv4(),
       description,
@@ -63,8 +46,6 @@ const handleAdd = (description: string, priority: number) => {
     })
     newTodoInput.value = '';
     selectedPriority.value = 1
-
-    sort()
   }
 }
 
@@ -73,8 +54,6 @@ const handleDelete = (id: string) => {
   todos.value = todos.value.filter((item) => {
     return item.id !== id
   })
-
-  sort()
  }
 }
 
@@ -112,8 +91,6 @@ onMounted(async () => {
     ];
     console.error(err);
   }
-
-  sort()
 });
 
 
@@ -126,35 +103,45 @@ onMounted(async () => {
       <div>
         You have {{ undoneQty }} pending ToDo´s
       </div>
-      <div>
-        <input
-          type="text"
-          v-model.trim="newTodoInput"
-          class="text-black outline-0 rounded-md pl-2"
-        />
-        <div>
-        <label for="priority-select">Select a priority:</label>
-          <select
-            v-model="selectedPriority"
-            id="number-select"
-            class="text-black outline-0 rounded-md pl-2"
-          >
-            <option v-for="number in numbers" :key="number">{{ number }}</option>
-          </select>
-        </div>
-        <button @click="() => handleAdd(newTodoInput, selectedPriority)">Add</button>
+    </div>
+    <div class="flex justify-between p-4 max-w-2xl">
+      <input
+        type="text"
+        v-model.trim="newTodoInput"
+        class="text-black outline-0 rounded-md pl-2 w-72"
+      />
+      <div class="flex justify-between items-center">
+        <label
+          for="priority-select"
+          class="max-w-xs"
+        >
+          Select a priority:
+        </label>
+        <select
+          v-model="selectedPriority"
+          id="number-select"
+          class="form-select appearance-none block w-25 max-w-xs px-3 py-1.5 text-base font-normal text-gray-700 bg-white bg-clip-padding bg-no-repeat border border-solid border-gray-300 rounded transition ease-in-out m-0 focus:text-gray-700 focus:bg-white focus:border-blue-600 focus:outline-none"
+        >
+          <option v-for="number in numbers" :key="number">{{ number }}</option>
+        </select>
       </div>
+      <button
+        @click="handleAdd(newTodoInput, selectedPriority)"
+        class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-4 rounded"
+      >
+        Add
+      </button>
     </div>
     <div class="flex justify-between">
       <div>
         <Switch
-          v-model="pendingTasks"
-          :class="pendingTasks ? 'bg-blue-600' : 'bg-gray-400'"
+          v-model="hidePendingTasks"
+          :class="hidePendingTasks ? 'bg-blue-600' : 'bg-gray-400'"
           class="relative inline-flex h-6 w-11 items-center rounded-full"
         >
           <span class="sr-only">Show Pending Tasks</span>
           <span
-            :class="pendingTasks ? 'translate-x-6' : 'translate-x-1'"
+            :class="hidePendingTasks ? 'translate-x-6' : 'translate-x-1'"
             class="inline-block h-4 w-4 transform rounded-full bg-white transition"
           />
         </Switch>
@@ -163,11 +150,11 @@ onMounted(async () => {
       <div>
         Status
         <Switch
-          v-model="sortBy"
+          v-model="sortByPriority"
           class="relative inline-flex h-6 w-11 items-center rounded-full bg-blue-600"
         >
           <span
-            :class="sortBy ? 'translate-x-6' : 'translate-x-1'"
+            :class="sortByPriority ? 'translate-x-6' : 'translate-x-1'"
             class="inline-block h-4 w-4 transform rounded-full bg-white transition"
           />
         </Switch>
@@ -191,15 +178,12 @@ onMounted(async () => {
                 </button>
               </span>
               <span>
-                <button @click="() => handleDelete(todo.id)">Remove</button>
+                <button @click="handleDelete(todo.id)">Remove</button>
               </span>
             </div>
           </div>
         </li>
       </ul>
-    </div>
-    <div>
-      You have {{ undoneQty }} pending ToDo´s
     </div>
   </div>
 </template>
