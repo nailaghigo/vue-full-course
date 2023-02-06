@@ -4,24 +4,20 @@ import { onMounted, ref } from 'vue';
 const numbers = [1, 2, 3];
 const newTodoInput = ref('');
 const selectedPriority = ref(1);
+const input = ref<HTMLElement | null>();
 
 const emits = defineEmits<{
   (
-    e: 'onSaveDataToAdd',
-    {
-      newTodoInput,
-      selectedPriority,
-    }: { newTodoInput: string; selectedPriority: number }
+    event: 'onSaveDataToAdd',
+    { description, priority }: { description: string; priority: number }
   ): void;
 }>();
 
-const handleOnSave = (newTodoInput: string, selectedPriority: number) => {
-  emits('onSaveDataToAdd', { newTodoInput, selectedPriority });
-  newTodoInput = '';
-  selectedPriority = 1;
+const handleOnSave = (description: string, priority: number) => {
+  emits('onSaveDataToAdd', { description, priority });
+  newTodoInput.value = '';
+  selectedPriority.value = 1;
 };
-
-const input = ref<HTMLElement | null>();
 
 onMounted(() => {
   input.value?.focus();

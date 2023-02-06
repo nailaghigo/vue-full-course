@@ -4,17 +4,11 @@ import { computed, onMounted, ref, watchEffect } from 'vue';
 import axios from 'axios';
 import Filters from './Filters.vue';
 import AddForm from './AddForm.vue';
-
-interface Todos {
-  id: string;
-  description: string;
-  priority: number;
-  done: boolean;
-}
+import TodosList from './TodosList.vue';
+import { Todos } from '../types';
 
 const todos = ref<Todos[] | null>(null);
 const hidePendingTasks = ref(false);
-
 const sortByPriority = ref(false);
 
 const shownTodos = computed(() => {
@@ -33,26 +27,18 @@ const undoneQty = computed(() => {
 });
 
 const onSaveDataToAdd = ({
-  newTodoInput,
-  selectedPriority,
+  description,
+  priority,
 }: {
-  newTodoInput: string;
-  selectedPriority: number;
+  description: string;
+  priority: number;
 }) => {
-  if (newTodoInput !== '') {
+  if (description !== '') {
     todos.value?.push({
       id: uuidv4(),
-      description: newTodoInput,
-      priority: selectedPriority,
+      description,
+      priority,
       done: false,
-    });
-  }
-};
-
-const handleDelete = (id: string) => {
-  if (todos.value) {
-    todos.value = todos.value.filter((item) => {
-      return item.id !== id;
     });
   }
 };
@@ -96,10 +82,10 @@ onMounted(async () => {
 
 <template>
   <div class="max-w-5xl m-auto mt-4">
-    <div class="flex justify-between">
-      <h1>To Do List With Vue</h1>
-      <div>You have {{ undoneQty }} pending ToDo´s</div>
+    <div class="w-full flex justify-center">
+      <h1 class="text-3xl font-bold">To Do List With Vue</h1>
     </div>
+    <div>You have {{ undoneQty }} pending ToDo´s</div>
     <Filters
       :hide-pending-tasks="hidePendingTasks"
       :sort-by-priority="sortByPriority"
@@ -109,28 +95,7 @@ onMounted(async () => {
 
     <AddForm @onSaveDataToAdd="onSaveDataToAdd($event)" />
 
-    <div>
-      <ul>
-        <li v-for="todo in shownTodos">
-          <div class="flex justify-between">
-            <span>
-              {{ todo.description }}
-            </span>
-            <div class="flex gap-5">
-              <span>Priority: {{ todo.priority }}</span>
-              <span>
-                <button @click="todo.done = !todo.done">
-                  {{ todo.done ? 'Done' : 'Undone' }}
-                </button>
-              </span>
-              <span>
-                <button @click="handleDelete(todo.id)">Remove</button>
-              </span>
-            </div>
-          </div>
-        </li>
-      </ul>
-    </div>
+    <TodosList :todo-list="shownTodos || []" />
   </div>
 </template>
 

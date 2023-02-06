@@ -1,16 +1,15 @@
 <script setup lang="ts">
-import { Switch } from "@headlessui/vue";
+import { Switch } from '@headlessui/vue';
 
 const props = defineProps<{
-  hidePendingTasks: boolean,
-  sortByPriority: boolean
-}>()
+  hidePendingTasks: boolean;
+  sortByPriority: boolean;
+}>();
 
 const emit = defineEmits<{
-  (e: 'onHidePendingTasks'): void,
-  (e: 'onSortByPriority'): void
-}>()
-
+  (e: 'onHidePendingTasks'): void;
+  (e: 'onSortByPriority'): void;
+}>();
 </script>
 
 <template>
@@ -47,7 +46,4 @@ const emit = defineEmits<{
   </div>
 </template>
 
-<style scoped>
-
-</style>
-
+<style scoped></style>
