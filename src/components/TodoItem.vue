@@ -7,7 +7,7 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  (e: 'handleDelete', id: string): void;
+  (e: 'handleOpenDeleteModal', todo: Todos): void;
 }>();
 </script>
 
@@ -24,7 +24,7 @@ const emit = defineEmits<{
         </button>
       </span>
       <span>
-        <button @click="emit('handleDelete', todo.id)">Remove</button>
+        <button @click="emit('handleOpenDeleteModal', todo)">Remove</button>
       </span>
     </div>
   </div>

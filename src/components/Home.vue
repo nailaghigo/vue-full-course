@@ -43,6 +43,12 @@ const onSaveDataToAdd = ({
   }
 };
 
+const onDeleteTodo = (id: string) => {
+  if (todos.value) {
+    todos.value = todos.value?.filter((todo) => todo.id !== id);
+  }
+};
+
 onMounted(async () => {
   try {
     const { data, status } = await axios.get('http://localhost:4000/todos');
@@ -95,7 +101,7 @@ onMounted(async () => {
 
     <AddForm @onSaveDataToAdd="onSaveDataToAdd($event)" />
 
-    <TodosList :todo-list="shownTodos || []" />
+    <TodosList :todo-list="shownTodos || []" @on-delete-todo="onDeleteTodo" />
   </div>
 </template>
 
